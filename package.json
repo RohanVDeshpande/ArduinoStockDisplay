@@ -1,0 +1,26 @@
+{
+  "name": "arduinostockdisplay",
+  "version": "1.0.0",
+  "description": "displays stock prices on 8x8 arduino display",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RohanVDeshpande/ArduinoStockDisplay.git"
+  },
+  "author": "Rohan Deshpande",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/RohanVDeshpande/ArduinoStockDisplay/issues"
+  },
+  "homepage": "https://github.com/RohanVDeshpande/ArduinoStockDisplay#readme",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.2",
+    "express": "^4.16.4",
+    "request": "^2.88.0",
+    "request-promise": "^4.2.2",
+    "serialport": "^7.0.2"
+  }
+}
