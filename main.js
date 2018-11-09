@@ -1,50 +1,63 @@
 const fs = require('fs');
-var express = require('express');
-var app = express();
-var bodyParser = require('body-parser')
-app.use( bodyParser.json() );       // to support JSON-encoded bodies
-app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
-  extended: true
-}));
+var app = require('express')();
+var http = require('http').Server(app);
+var io = require('socket.io')(http);
+var bodyParser = require('body-parser');
+var request = require('request');
+var cheerio = require('cheerio');
 
-var server = app.listen(4000,function(){
-	console.log('listening to requests on port 4000');
+app.get('/', function(req, res) {
+   res.sendfile('index.html');
 });
 
-app.use(express.static('public'));
-
-var SerialPort = require('serialport');
-const Readline = require('@serialport/parser-readline')
-var port = new SerialPort('COM3', {
-    baudRate: 9600
+http.listen(3000, function() {
+   console.log('listening on *:3000');
 });
 
-const parser = port.pipe(new Readline({ delimiter: '\n' }))
+io.on('connection', function(socket) {
+   console.log('A user connected');
 
+   //Whenever someone disconnects this piece of code executed
+   socket.on('disconnect', function () {
+      console.log('A user disconnected');
+   });
 
-port.on("open", function () {
-  console.log('open');
-  parser.on('data', function(data) {
-    console.log(data);
-  });
+   getStock(socket, "TSLA");
+   generateGraph(socket, "TSLA");
+
 });
 
-function ping(){
-	port.write('hi');	
+function getStock(socket, ticker){
+	request('https://api.iextrading.com/1.0/stock/'+ticker+'/quote', function (error, response, html) {
+	  if (!error && response.statusCode == 200) {
+	  	//console.log(html);
+	  	var data = JSON.parse(html);
+	  	var symbol = data.symbol;
+	  	//console.log(symbol);
+	  	var currentPrice = data.latestPrice;
+	  	//console.log(currentPrice);
+	  	var previousClose = data.previousClose;
+	  	var delta = currentPrice - previousClose;
+	  	var deltaStr = "";
+	  	if(delta>0){
+	  		deltaStr+="+";
+	  	}
+	  	else{
+	  		deltaStr+="-";
+	  	}
+	  	deltaStr+=delta.toFixed(2);
+	  	//console.log(deltaStr);
+	  	socket.emit('stockData',{'symbol':symbol, 'price':currentPrice, 'delta':deltaStr});
+	  }
+	});
 }
 
-app.post('/api/users',function(req, res){
-	//console.log(req.body.ticker);
-	//console.log(req.body.price);
-	res.send("Received");
-	port.write(req.body.ticker+"\t"+req.body.price);
-});
-
-/*
-var fs = require('fs');
-var inp = fs.createReadStream("\\\\.\\COM3");
-inp.setEncoding('utf8');
-var inptext = "0 0";
-inp.on('data', function (data) {
-  inptext += data;
-});*/
+function generateGraph(socket, ticker){
+	request('https://api.iextrading.com/1.0/stock/'+ticker+'/chart/1d', function (error, response, html) {
+	  if (!error && response.statusCode == 200) {
+	  	//console.log(html);
+	  	var data = JSON.parse(html);
+	  	socket.emit('trend',data);
+	  }
+	});
+}

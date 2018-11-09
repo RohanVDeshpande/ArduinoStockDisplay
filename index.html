@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>TEST</title>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+</head>
+<script src = "/socket.io/socket.io.js"></script>
+<body>
+<h1>NodeJS Arduino TEST</h1>
+
+<h2 id="symb"></h2>
+<h2 id="price"></h2>
+<h2 id="delta"></h2>
+<div id="chart_div" style="width: 1500px; height: 1000px"></div>
+<script type="text/javascript">
+	var socket = io();
+    socket.on('stockData', function(data){
+    	console.log(data);
+    	document.getElementById('symb').innerHTML = data.symbol;
+    	document.getElementById('price').innerHTML = data.price;
+    	document.getElementById('delta').innerHTML = data.delta;	
+    });
+    socket.on('trend', function(trend){
+    	console.log(trend);
+    	google.charts.load('current', {packages: ['corechart', 'line']});
+		google.charts.setOnLoadCallback(drawBasic);
+		function drawBasic() {
+	      var data = new google.visualization.DataTable();
+	      data.addColumn('datetime', 'Time of Day');
+	      data.addColumn('number', 'Stock Price');
+	      var graphData = [];
+	      for(var i = 0; i<trend.length; i++){
+	      	var dateStr = trend[i].date;
+	      	dateStr = dateStr.substring(0,4) + "-"+dateStr.substring(4);
+	      	dateStr = dateStr.substring(0,7) + "-"+dateStr.substring(7);
+	      	dateStr += " ";
+	      	dateStr += trend[i].label;
+	      	var elem = [new Date(dateStr), trend[i].marketAverage];
+	      	graphData.push(elem);
+	      }
+	      data.addRows(graphData);
+	      var minDate = new Date();
+	      var maxDate = new Date();
+	      minDate.setHours(9);
+	      minDate.setMinutes(30);
+	      minDate.setSeconds(0);
+	      maxDate.setHours(16);
+	      maxDate.setMinutes(0);
+	      maxDate.setSeconds(0);
+	      var options = {
+	        hAxis: {
+	          title: 'Time',
+	          viewWindow: {
+			        min: minDate,
+			        max: maxDate
+			    }
+	        },
+	        vAxis: {
+	          title: 'Stock Price'
+	        }
+	      };
+
+	      var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+
+	      chart.draw(data, options);
+	    }
+    })
+</script>
+
+</body>
+</html>
