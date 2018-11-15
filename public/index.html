@@ -52,7 +52,9 @@
 	      		dateStr += trend[i].label;
 	      	}
 	      	var elem = [new Date(dateStr), trend[i].marketAverage];
-	      	graphData.push(elem);
+	      	if(trend[i].marketAverage != -1){
+	      		graphData.push(elem);
+	      	}
 	      }
 	      data.addRows(graphData);
 	      var minDate = new Date();
